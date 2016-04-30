@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="stylesheet" href="public/css/bootstrap.css">
+    <link rel="stylesheet" href="public/css/ct-paper.css">
+    <script src="http://code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+    <script src="public/js/bootstrap.js"></script>
+    <script src="public/js/jquery.elastic.source.js"></script>
+    <script src="public/js/autosize.js"></script>
+    <style>
+        .noBackground{
+            background: none !important;
+            border: none; !important;
+        }
+
+        .deposite-zone{
+            border: 1px #000 solid;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="deposite-zone col-md-8">
+    <span class="info-text">Deposez vos trucs ici</span>
+</div>
+<div class="draggable-objects-zone col-md-4">
+    <div class="draggable-object thumbnail col-md-11" data-type="1">
+        <p class="text-center"><span class="glyphicon glyphicon-barcode"></span>1</p>
+    </div>
+    <div class="draggable-object thumbnail col-md-11" data-type="2">
+        <p class="text-center"><span class="glyphicon glyphicon-barcode"></span>2</p>
+    </div>
+    <div class="draggable-object thumbnail col-md-11" data-type="3">
+        <p class="text-center"><span class="glyphicon glyphicon-barcode"></span>3</p>
+    </div>
+    <div class="draggable-object thumbnail col-md-11" data-type="4">
+        <p class="text-center"><span class="glyphicon glyphicon-barcode"></span>4</p>
+    </div>
+</div>
+</div>
+<button type="submit" id="save">Enregistrer</button>
+<script>
+
+    var idObject = 0;
+
+    var width = $('.deposite-zone').width();
+
+    $('.draggable-object').draggable({
+        connectToSortable: ".deposite-zone",
+        helper: "clone",
+        revert: "invalid",
+        start: function(event,ui){
+            var id = ui.helper[0].dataset.type;
+            var url = "ajax-input.php?id=" + id;
+            $.get(url)
+                    .done(function(data){
+                        $(ui.helper).html(data).data("id",idObject).attr("width",width + "px");
+                        idObject++;
+                    });
+        },
+        stop : function(){
+            //$("textarea").elastic();
+        }
+    });
+    $( ".deposite-zone" ).sortable({
+        revert: true,
+        update : function(){
+            $('.info-text').fadeOut();
+            sendData();
+        },
+        stop : function(event,ui){//ou out pour suppression
+            var target = ui.item;
+            //console.log(ui);
+            //target.draggable("destroy");
+        }
+    });
+     function sendData(){
+         var datas = [];
+         var items = $('.deposite-zone').find('.draggable-object');
+         for(var i=0;i<items.length;i++){
+             var item = items[i];
+             var type = item.dataset.type;
+             $(item).addClass('noBackground');
+             var form = $(item).find('form').serializeArray();
+             datas[i] = [type,form];
+         }
+         var content = JSON.stringify(datas);
+         var url = "save-ajax.php?datas=" + content;
+         $.get(url)
+                 .done(function(data){
+                    $('body').append(data);
+                 });
+         console.log(datas);
+     }
+
+    $('#save').click(function(){
+       sendData();
+    });
+
+    function searchContent(id){
+        var url = "ajax-input.php?id=" + id;
+        var content;
+        $.get(url)
+                .done(function(data){
+                    console.log(data);
+                });
+        console.log(content);
+        return content;
+    }
+
+
+</script>
+</body>
+</html>
